@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Sayfa bileşenlerini import edin
 import { LoginPage } from './pages/LoginPage';
+import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { RolesPage } from './features/admin/pages/RolesPage';
 import { PermissionsPage } from './features/admin/pages/PermissionsPage';
@@ -24,6 +25,8 @@ function App() {
           {/* Login sayfası */}
           <Route path="/login" element={<LoginPage />} />
 
+          {/* Yetkisiz erişim sayfası */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
           {/* Dashboard - korumalı rota */}
           <Route
             path="/dashboard"
@@ -34,48 +37,27 @@ function App() {
             }
           />
 
-          {/* Dashboard alt sayfaları */}
+          {/* Rol yönetimi sayfası - MANAGE_ROLES izni veya PLATFORM_ADMIN rolü gerektirir */}
           <Route
-            path="/dashboard/stats"
+            path="/admin/roles"
             element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/users"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/settings"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Platform Admin sayfaları */}
-          <Route
-            path="/dashboard/roles"
-            element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                permission="MANAGE_ROLES"
+                role="PLATFORM_ADMIN"
+              >
                 <RolesPage />
               </ProtectedRoute>
             }
           />
 
+          {/* İzin yönetimi sayfası - MANAGE_PERMISSIONS izni veya PLATFORM_ADMIN rolü gerektirir */}
           <Route
-            path="/dashboard/permissions"
+            path="/admin/permissions"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                permission="MANAGE_PERMISSIONS"
+                role="PLATFORM_ADMIN"
+              >
                 <PermissionsPage />
               </ProtectedRoute>
             }
@@ -90,3 +72,5 @@ function App() {
 }
 
 export default App;
+
+

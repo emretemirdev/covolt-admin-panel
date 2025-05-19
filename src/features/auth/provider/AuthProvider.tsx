@@ -133,35 +133,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [attemptAutoLogin]);
 
   // Login fonksiyonunu API yanıtını alacak şekilde güncelliyoruz
-  const login = (authResponse: AuthResponsePayload) => { // <-- İmza değişti
+  const login = (authResponse: AuthResponsePayload) => {
     try {
-      const { accessToken, refreshToken, expiresAt } = authResponse; // Yanıttan değerleri al
+      const { accessToken, refreshToken, expiresAt } = authResponse;
 
       // Tokenları sessionStorage'a kaydet
       sessionStorage.setItem('accessToken', accessToken);
       sessionStorage.setItem('refreshToken', refreshToken);
-      sessionStorage.setItem('tokenExpiresAt', expiresAt); // <-- Backendden gelen expiresAt'i kaydet
+      sessionStorage.setItem('tokenExpiresAt', expiresAt);
 
       // Access tokenı decode ederek kullanıcı bilgilerini al
       const decodedToken: DecodedToken = jwtDecode(accessToken);
-        const userFromToken: User = {
-          id: decodedToken.sub,
-          email: decodedToken.email,
-          username: decodedToken.username,
-          // fullName: decodedToken.fullName, // Eğer token'da varsa
-          // ... token'dan alabileceğiniz diğer kullanıcı bilgileri
-        };
+      const userFromToken: User = {
+        id: decodedToken.sub,
+        email: decodedToken.email,
+        username: decodedToken.username,
+      };
 
       // Auth state'i güncelle
       setAuthState({
         isAuthenticated: true,
-        user: userFromToken, // Token'dan alınan user bilgisini kullan
+        user: userFromToken,
         accessToken: accessToken,
         refreshToken: refreshToken,
-        tokenExpiresAt: expiresAt, // <-- Backendden gelen expiresAt'i kullan
+        tokenExpiresAt: expiresAt,
         isLoading: false,
         error: null,
       });
+
+      // YENİ: Rol ve izinleri ayrı bir istekle al
+      // Not: Bu işlem useAuthorization hook'u tarafından otomatik olarak yapılacak
+      // Kullanıcı giriş yaptığında useAuthorization hook'u çalışacak ve rol/izinleri alacak
 
     } catch (error) {
       console.error("Error during login or token decoding:", error);

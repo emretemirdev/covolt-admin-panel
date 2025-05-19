@@ -228,35 +228,43 @@ export function RolesPage() {
                 </tr>
               </thead>
               <tbody>
-                {roles.map((role) => (
-                  <tr key={role.id}>
-                    <td>{role.name}</td>
-                    <td>{role.description}</td>
-                    <td>
-                      <Group gap="xs">
-                        {role.permissions && role.permissions.length > 0 ? (
-                          role.permissions.map(permission => (
-                            <Badge key={permission.id} size="sm">
-                              {permission.name}
-                            </Badge>
-                          ))
-                        ) : (
-                          <Text size="sm" c="dimmed">İzin yok</Text>
-                        )}
-                      </Group>
-                    </td>
-                    <td>
-                      <Group gap="xs" justify="flex-end">
-                        <ActionIcon color="blue" onClick={() => openEditModal(role)}>
-                          <IconEdit size="1rem" />
-                        </ActionIcon>
-                        <ActionIcon color="red" onClick={() => openDeleteModal(role)}>
-                          <IconTrash size="1rem" />
-                        </ActionIcon>
-                      </Group>
+                {Array.isArray(roles) && roles.length > 0 ? (
+                  roles.map((role) => (
+                    <tr key={role.id}>
+                      <td>{role.name}</td>
+                      <td>{role.description}</td>
+                      <td>
+                        <Group gap="xs">
+                          {role.permissions && role.permissions.length > 0 ? (
+                            role.permissions.map(permission => (
+                              <Badge key={permission.id} size="sm">
+                                {permission.name}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Text size="sm" c="dimmed">İzin yok</Text>
+                          )}
+                        </Group>
+                      </td>
+                      <td>
+                        <Group gap="xs" justify="flex-end">
+                          <ActionIcon color="blue" onClick={() => openEditModal(role)}>
+                            <IconEdit size="1rem" />
+                          </ActionIcon>
+                          <ActionIcon color="red" onClick={() => openDeleteModal(role)}>
+                            <IconTrash size="1rem" />
+                          </ActionIcon>
+                        </Group>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center' }}>
+                      {loading ? 'Roller yükleniyor...' : 'Görüntülenecek rol bulunamadı.'}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </Table>
           )}
@@ -328,3 +336,6 @@ export function RolesPage() {
     </DashboardLayout>
   );
 }
+
+
+

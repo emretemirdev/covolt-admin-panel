@@ -8,6 +8,8 @@ import { ThemeProvider } from './shared/providers/ThemeProvider';
 // Mantine temel stilleri
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import './index.css';
+import './App.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

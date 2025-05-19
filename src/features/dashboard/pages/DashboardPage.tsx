@@ -1,19 +1,22 @@
-import { 
-  Title, 
-  SimpleGrid, 
-  Container, 
-  useMantineTheme
+import {
+  Title,
+  SimpleGrid,
+  Container,
+  useMantineTheme,
+  Space
 } from '@mantine/core';
-import { 
-  IconUsers, 
-  IconDeviceAnalytics, 
-  IconGauge, 
-  IconCoin 
+import {
+  IconUsers,
+  IconDeviceAnalytics,
+  IconGauge,
+  IconCoin
 } from '@tabler/icons-react';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { StatsCard } from '../components/StatsCard';
 import { PerformanceChart } from '../components/PerformanceChart';
 import { SummaryStats } from '../components/SummaryStats';
+import { AuthDebugger } from '../../auth/components/AuthDebugger';
+import { ApiTester } from '../../auth/components/ApiTester';
 
 // Ana dashboard sayfası
 export function DashboardPage() {
@@ -48,6 +51,16 @@ export function DashboardPage() {
           <PerformanceChart />
           <SummaryStats />
         </SimpleGrid>
+
+        <Space h="xl" />
+
+        {/* Yetkilendirme Debugger */}
+        <AuthDebugger />
+
+        <Space h="xl" />
+
+        {/* API Tester */}
+        <ApiTester />
       </Container>
     </DashboardLayout>
   );

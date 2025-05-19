@@ -56,8 +56,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: IconHome, label: 'Ana Sayfa', path: '/dashboard' },
     { icon: IconGauge, label: 'İstatistikler', path: '/dashboard/stats' },
     { icon: IconUser, label: 'Kullanıcılar', path: '/dashboard/users' },
-    { icon: IconUser, label: 'Rol Yönetimi', path: '/dashboard/roles' },
-    { icon: IconAdjustments, label: 'İzin Yönetimi', path: '/dashboard/permissions' },
+    { icon: IconUser, label: 'Rol Yönetimi', path: '/admin/roles' },
+    { icon: IconAdjustments, label: 'İzin Yönetimi', path: '/admin/permissions' },
     { icon: IconAdjustments, label: 'Ayarlar', path: '/dashboard/settings' },
   ];
 
@@ -119,6 +119,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 label={link.label}
                 active={index === active && active < navbarLinks.length}
                 onClick={() => {
+                  console.log(`Navigating to: ${link.path}`);
                   setActive(index);
                   navigate(link.path);
                   setOpened(false);

@@ -1,17 +1,22 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../features/auth/hooks/useAuth'; // Auth hook'umuzun doğru yolunu belirtin
-import { Center, Loader } from '@mantine/core'; // Yükleme göstergesi için
+import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useAuthorization } from '../../features/auth/hooks/useAuthorization';
+import { Center, Loader } from '@mantine/core';
 import type { ReactNode } from 'react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  permission?: string;
+  role?: string;
 }
 
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth(); // Auth durumunu ve yükleme durumunu al
-  const location = useLocation(); // Kullanıcının gitmek istediği mevcut konumu al
+export const ProtectedRoute = ({ children, permission, role }: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { hasPermission, hasRole, isLoading: authzLoading, roles, permissions } = useAuthorization();
+  const location = useLocation();
 
+  const isLoading = authLoading || authzLoading;
 
   if (isLoading) {
     return (
@@ -21,16 +26,42 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // Eğer kullanıcı giriş yapmamışsa (isAuthenticated false ise)
+  // Eğer kullanıcı giriş yapmamışsa login sayfasına yönlendir
   if (!isAuthenticated) {
-    // Kullanıcıyı /login sayfasına yönlendir.
-    // 'state={{ from: location }}' ile kullanıcının gitmek istediği orijinal sayfanın
-    // bilgisini login sayfasına taşıyoruz. Böylece başarılı login sonrası oraya geri dönebilir.
-    // 'replace' prop'u, tarayıcı geçmişinde /login sayfasının bir önceki sayfanın yerine geçmesini sağlar.
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Eğer kullanıcı giriş yapmışsa (isAuthenticated true ise)
-  // İstenen iç içe route'ları (child routes) render et.
+  // Eğer rol veya izin kontrolü gerekiyorsa
+  console.log('ProtectedRoute - Checking access:');
+  console.log('- Role required:', role);
+  console.log('- Permission required:', permission);
+
+  // Rol kontrolü
+  const roleCheck = role ? hasRole(role) : false;
+  console.log('- Has role:', roleCheck);
+
+  // İzin kontrolü
+  const permissionCheck = permission ? hasPermission(permission) : false;
+  console.log('- Has permission:', permissionCheck);
+
+  // Hiçbir kontrol gerekli değilse
+  const noCheckRequired = !role && !permission;
+  console.log('- No check required:', noCheckRequired);
+
+  // Rol veya izin kontrolü başarılı ise veya hiçbir kontrol gerekli değilse erişime izin ver
+  const hasAccess = roleCheck || permissionCheck || noCheckRequired;
+  console.log('- Has access:', hasAccess);
+
+  // Kullanıcının rollerini ve izinlerini logla
+  console.log('- User roles:', roles);
+  console.log('- User permissions:', permissions);
+
+  if (!hasAccess) {
+    // Erişim yoksa, yetkisiz sayfasına yönlendir
+    console.log('Access denied, redirecting to /unauthorized');
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // Kullanıcı giriş yapmış ve gerekli izinlere sahipse içeriği göster
   return <>{children}</>;
 };

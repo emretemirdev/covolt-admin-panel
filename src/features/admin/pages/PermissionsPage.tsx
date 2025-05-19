@@ -203,21 +203,17 @@ export function PermissionsPage() {
         </Group>
 
         <Paper withBorder p="md" radius="md">
-          {permissions.length === 0 ? (
-            <Text ta="center" c="dimmed" py="xl">
-              Henüz izin bulunmuyor. Yeni bir izin ekleyin.
-            </Text>
-          ) : (
-            <Table striped highlightOnHover>
-              <thead>
-                <tr>
-                  <th>İzin Adı</th>
-                  <th>Açıklama</th>
-                  <th style={{ width: 120 }}>İşlemler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {permissions.map((permission) => (
+          <Table striped highlightOnHover>
+            <thead>
+              <tr>
+                <th>İzin Adı</th>
+                <th>Açıklama</th>
+                <th style={{ width: 120 }}>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.isArray(permissions) && permissions.length > 0 ? (
+                permissions.map((permission) => (
                   <tr key={permission.id}>
                     <td>{permission.name}</td>
                     <td>{permission.description}</td>
@@ -232,10 +228,16 @@ export function PermissionsPage() {
                       </Group>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center' }}>
+                    {loading ? 'İzinler yükleniyor...' : 'Görüntülenecek izin bulunamadı.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </Table>
         </Paper>
 
         {/* İzin Oluşturma/Düzenleme Modalı */}
@@ -295,3 +297,4 @@ export function PermissionsPage() {
     </DashboardLayout>
   );
 }
+
