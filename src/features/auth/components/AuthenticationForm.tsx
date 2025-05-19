@@ -12,15 +12,20 @@ import {
     LoadingOverlay,
   } from '@mantine/core';
   import { useForm } from '@mantine/form';
-  import { IconAlertCircle, IconAt, IconLock } from '@tabler/icons-react';
-  import { useNavigate } from 'react-router-dom';
+  import { notifications } from '@mantine/notifications';
+  import { IconAlertCircle, IconAt, IconLock, IconCheck } from '@tabler/icons-react';
+  import { useNavigate, useLocation } from 'react-router-dom';
   import { useAuth } from '../hooks/useAuth';
   import { loginUser } from '../api/authApi.ts';
   import type { UserCredentials, AuthResponsePayload } from '../types/index.ts';
 
   export function AuthenticationForm(props: PaperProps) {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login, isLoading, error, setLoading, setError } = useAuth();
+
+    // Kullanıcının gelmek istediği orijinal sayfayı al (varsa)
+    const from = location.state?.from?.pathname || '/dashboard';
 
     const form = useForm({
       initialValues: {
@@ -41,11 +46,30 @@ import {
         const credentials: UserCredentials = { email: values.email, password: values.password };
         const response: AuthResponsePayload = await loginUser(credentials);
         login(response);
-        navigate('/');
+
+        // Başarılı giriş bildirimi göster
+        notifications.show({
+          title: 'Giriş Başarılı',
+          message: 'Hoş geldiniz! Yönetim paneline yönlendiriliyorsunuz.',
+          color: 'green',
+          icon: <IconCheck size="1.1rem" />,
+          autoClose: 3000,
+        });
+
+        // Kullanıcıyı orijinal hedef sayfasına yönlendir
+        navigate(from, { replace: true });
       } catch (apiError: any) {
-        console.error('Login API hatası:', apiError);
         const errorMessage = apiError.message || 'Giriş işlemi sırasında bir hata oluştu.';
         setError(errorMessage);
+
+        // Hata bildirimi göster
+        notifications.show({
+          title: 'Giriş Başarısız',
+          message: errorMessage,
+          color: 'red',
+          icon: <IconAlertCircle size="1.1rem" />,
+          autoClose: 4000,
+        });
       } finally {
         setLoading(false);
       }

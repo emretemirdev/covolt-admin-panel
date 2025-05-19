@@ -1,65 +1,90 @@
 // src/App.tsx
 
-import { Button, Title } from '@mantine/core';
-// React Router DOM bileşenlerini import edin
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Sayfa componentlerini import edin
-import { LoginPage } from './pages/LoginPage'; // LoginPage componentiniz
-// Ana uygulama veya dashboard sayfası için bir component import etmeniz gerekebilir
-// import { DashboardPage } from './pages/DashboardPage';
-import { ProtectedRoute } from './app/router/ProtectedRoute'; // Korumalı Rota componentiniz
+// Sayfa bileşenlerini import edin
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './features/dashboard/pages/DashboardPage';
+import { RolesPage } from './features/admin/pages/RolesPage';
+import { PermissionsPage } from './features/admin/pages/PermissionsPage';
+import { ProtectedRoute } from './app/router/ProtectedRoute';
 
 // AuthProvider'ı import edin
 import { AuthProvider } from './features/auth/provider/AuthProvider';
 
-// Ana uygulama component'i
+// Ana uygulama bileşeni
 function App() {
   return (
-    // 1. Uygulamanızı BrowserRouter ile sarmalayın
     <BrowserRouter>
-        {/* 2. AuthProvider'ı, auth contextine ihtiyacı olan rotaları sarmalayacak şekilde yerleştirin */}
-        {/* Genellikle tüm rotaları sarmalar */}
-        <AuthProvider>
-            {/* 3. Rota tanımlarını Routes bileşeni içine ekleyin */}
-            <Routes>
-                {/* Ana sayfa - giriş yapılmamışsa login'e yönlendir */}
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                
-                {/* Login sayfası */}
-                <Route path="/login" element={<LoginPage />} />
+      <AuthProvider>
+        <Routes>
+          {/* Ana sayfa - giriş yapılmamışsa login'e yönlendir */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-                {/* Dashboard - korumalı rota */}
-                <Route
-                    path="/dashboard"
-                    element={
-                        <ProtectedRoute>
-                            <div style={{ padding: '20px', textAlign: 'center' }}>
-                                <Title order={1}>Covolt Admin Paneli</Title>
-                                <p>Hoş geldiniz!</p>
-                                <Button m="md">Örnek Buton</Button>
-                            </div>
-                        </ProtectedRoute>
-                    }
-                />
+          {/* Login sayfası */}
+          <Route path="/login" element={<LoginPage />} />
 
-                {/*
-                // Örnek: Başka bir korumalı rota
-                <Route
-                    path="/settings"
-                    element={
-                        <ProtectedRoute>
-                            // <SettingsPage /> // Ayarlar sayfası componentiniz
-                        </ProtectedRoute>
-                    }
-                />
-                */}
+          {/* Dashboard - korumalı rota */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-                {/* Tanımlanmayan yollar için dashboard'a yönlendir */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Dashboard alt sayfaları */}
+          <Route
+            path="/dashboard/stats"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-            </Routes>
-        </AuthProvider>
+          <Route
+            path="/dashboard/users"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Platform Admin sayfaları */}
+          <Route
+            path="/dashboard/roles"
+            element={
+              <ProtectedRoute>
+                <RolesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/permissions"
+            element={
+              <ProtectedRoute>
+                <PermissionsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Tanımlanmayan yollar için dashboard'a yönlendir */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

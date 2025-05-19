@@ -1,18 +1,20 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MantineProvider } from '@mantine/core';
+import { ColorSchemeScript } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 import App from './App.tsx';
+import { ThemeProvider } from './shared/providers/ThemeProvider';
 
 // Mantine temel stilleri
 import '@mantine/core/styles.css';
-
-// Debug için
-console.log('main.tsx yükleniyor...');
+import '@mantine/notifications/styles.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MantineProvider>
+    <ColorSchemeScript />
+    <ThemeProvider>
+      <Notifications position="top-right" zIndex={2000} />
       <App />
-    </MantineProvider>
+    </ThemeProvider>
   </React.StrictMode>,
 );

@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 // AuthContextType importunu güncelledik
 import type { User, AuthState, AuthContextType, AuthResponsePayload } from '../types/index.ts';
 import { jwtDecode } from 'jwt-decode';
-import { logoutUser } from '../api/authApi.ts';
+import { logoutUser, refreshToken } from '../api/authApi.ts';
 
 // JWT'den decode edilecek payload için bir interface (API'nizin JWT içeriğine göre özelleştirin)
 // API'nizin subject (sub) alanını id olarak kullanıp kullanmadığını doğrulayın
@@ -39,12 +39,12 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [authState, setAuthState] = useState<AuthState>(initialState);
 
-  // Otomatik giriş denemesi - sayfa yüklendiğinde localStorage'ı kontrol eder
-  const attemptAutoLogin = useCallback(() => {
+  // Otomatik giriş denemesi - sayfa yüklendiğinde sessionStorage'ı kontrol eder
+  const attemptAutoLogin = useCallback(async () => {
     setAuthState((prev: AuthState) => ({ ...prev, isLoading: true }));
-    const token = localStorage.getItem('accessToken');
-    const storedRefreshToken = localStorage.getItem('refreshToken');
-    const storedExpiresAt = localStorage.getItem('tokenExpiresAt'); // Backendden gelen değeri alacak
+    const token = sessionStorage.getItem('accessToken');
+    const storedRefreshToken = sessionStorage.getItem('refreshToken');
+    const storedExpiresAt = sessionStorage.getItem('tokenExpiresAt'); // Backendden gelen değeri alacak
 
     if (token && storedRefreshToken && storedExpiresAt) {
       try {
@@ -54,15 +54,48 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // decodedToken.exp Unix timestamp'tir, Date.now() milisaniyedir.
         const currentTime = Date.now() / 1000; // Saniyeye çevir
         if (decodedToken.exp < currentTime) {
-            console.warn("Access token expired. Attempting to use refresh token (TODO).");
-            // TODO: Burada refresh token ile yeni token alma mantığı devreye girmeli
-            // Şimdilik süresi dolmuşsa tokenları temizleyip login sayfasına yönlendiriyoruz.
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('tokenExpiresAt');
-            // localStorage.removeItem('user'); // user token'dan alınıyor
-            setAuthState((prev: AuthState) => ({ ...prev, ...initialState, isLoading: false, error: "Oturumunuz sona erdi. Lütfen tekrar giriş yapın." }));
-            return; // İşlemi durdur
+            console.warn("Access token expired. Attempting to use refresh token.");
+
+            // Token süresi dolmuşsa, refresh token ile yeni token almayı dene
+            try {
+                // handleRefreshToken fonksiyonu henüz tanımlanmadığı için burada doğrudan refreshToken API'sini çağırıyoruz
+                const newTokens: AuthResponsePayload = await refreshToken(storedRefreshToken);
+
+                // Yeni tokenları sessionStorage'a kaydet
+                sessionStorage.setItem('accessToken', newTokens.accessToken);
+                sessionStorage.setItem('refreshToken', newTokens.refreshToken);
+                sessionStorage.setItem('tokenExpiresAt', newTokens.expiresAt);
+
+                // Yeni access token'ı decode et
+                const newDecodedToken: DecodedToken = jwtDecode(newTokens.accessToken);
+
+                const userFromToken: User = {
+                  id: newDecodedToken.sub,
+                  email: newDecodedToken.email,
+                  username: newDecodedToken.username,
+                };
+
+                // Auth state'i güncelle
+                setAuthState({
+                  isAuthenticated: true,
+                  user: userFromToken,
+                  accessToken: newTokens.accessToken,
+                  refreshToken: newTokens.refreshToken,
+                  tokenExpiresAt: newTokens.expiresAt,
+                  isLoading: false,
+                  error: null,
+                });
+
+                return; // İşlemi başarıyla tamamla
+            } catch (refreshError) {
+                console.error("Failed to refresh token:", refreshError);
+                // Refresh token ile yenileme başarısız olursa tokenları temizle
+                sessionStorage.removeItem('accessToken');
+                sessionStorage.removeItem('refreshToken');
+                sessionStorage.removeItem('tokenExpiresAt');
+                setAuthState((prev: AuthState) => ({ ...prev, ...initialState, isLoading: false, error: "Oturumunuz sona erdi. Lütfen tekrar giriş yapın." }));
+                return; // İşlemi durdur
+            }
         }
 
         const userFromToken: User = {
@@ -84,17 +117,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         });
       } catch (e) {
         console.error("Failed to decode token or token invalid", e);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('tokenExpiresAt');
-        // localStorage.removeItem('user');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('tokenExpiresAt');
         setAuthState((prev: AuthState) => ({ ...prev, ...initialState, isLoading: false, error: "Geçersiz oturum bilgisi. Lütfen tekrar giriş yapın." }));
       }
     } else {
       // Tokenlar localStorage'da yok, kullanıcı giriş yapmamış
       setAuthState((prev: AuthState) => ({ ...prev, ...initialState, isLoading: false }));
     }
-  }, []); // Bağımlılıklar boş dizi, component ilk yüklendiğinde çalışır
+  }, [/* refreshToken fonksiyonu bağımlılık olarak eklenmedi çünkü değişmiyor */]); // Bağımlılıklar boş dizi, component ilk yüklendiğinde çalışır
 
   useEffect(() => {
     attemptAutoLogin();
@@ -105,10 +137,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const { accessToken, refreshToken, expiresAt } = authResponse; // Yanıttan değerleri al
 
-      // Tokenları localStorage'a kaydet
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('tokenExpiresAt', expiresAt); // <-- Backendden gelen expiresAt'i kaydet
+      // Tokenları sessionStorage'a kaydet
+      sessionStorage.setItem('accessToken', accessToken);
+      sessionStorage.setItem('refreshToken', refreshToken);
+      sessionStorage.setItem('tokenExpiresAt', expiresAt); // <-- Backendden gelen expiresAt'i kaydet
 
       // Access tokenı decode ederek kullanıcı bilgilerini al
       const decodedToken: DecodedToken = jwtDecode(accessToken);
@@ -134,15 +166,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error("Error during login or token decoding:", error);
       setError("Giriş sırasında bir sorun oluştu veya oturum bilgisi işlenemedi.");
-      // Hata durumunda localStorage'ı temizle ve state'i sıfırla
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('tokenExpiresAt');
+      // Hata durumunda sessionStorage'ı temizle ve state'i sıfırla
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('tokenExpiresAt');
       setAuthState((prev: AuthState) => ({...prev, ...initialState, isLoading: false, error: "Oturum bilgisi işlenemedi."}));
     }
   };
 
-  // Logout fonksiyonu aynı kalabilir, refresh tokenı kullanarak backend'e istek atar
+  // Logout fonksiyonu, refresh tokenı kullanarak backend'e istek atar
   const logout = async () => {
     setLoading(true); // Logout işlemi sırasında yükleme göster
     const currentRefreshToken = authState.refreshToken;
@@ -158,15 +190,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
     }
 
-    // localStorage'dan tokenları sil
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('tokenExpiresAt');
+    // sessionStorage'dan tokenları sil
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('tokenExpiresAt');
     // User bilgisini state'ten kaldır (localStorage'da tutmuyorduk artık)
-    // localStorage.removeItem('user'); // <-- Bu satır artık gerekli değil
 
     // Auth state'i sıfırla
-    setAuthState((prev: AuthState) => ({...initialState, isLoading: false})); // Tamamen sıfırla, isLoading: false önemli
+    setAuthState({...initialState, isLoading: false}); // Tamamen sıfırla, isLoading: false önemli
   };
 
 
@@ -178,42 +209,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setAuthState((prev: AuthState) => ({ ...prev, error, isLoading: false }));
   };
 
-  // TODO: Refresh token mekanizması için bir fonksiyon eklenebilir
+  // Refresh token mekanizması için fonksiyon
   // Bu fonksiyon, accessToken süresi dolduğunda veya 401 hatası alındığında çağrılır.
-  // refreshToken'ı kullanarak /api/auth/refresh endpoint'ine istek atar
-  // ve yeni access/refresh tokenları alır, ardından login() fonksiyonunu yeni tokenlarla çağırır.
-   /*
   const handleRefreshToken = async () => {
       setLoading(true);
       const currentRefreshToken = authState.refreshToken;
       if (!currentRefreshToken) {
-          setError("No refresh token available. Please log in.");
+          setError("Yenileme token'ı bulunamadı. Lütfen tekrar giriş yapın.");
           await logout(); // Refresh token yoksa kullanıcıyı tamamen çıkış yapmaya zorla
           return null; // İşlem başarısız
       }
 
       try {
-          // TODO: Implement refreshToken API call
-          // const newTokens: AuthResponsePayload = await refreshToken(currentRefreshToken);
-          // login(newTokens); // Yeni tokenlarla giriş yap
-          // return newTokens.accessToken; // Yeni access token'ı döndür
-
-          console.warn("Refresh token logic not implemented yet.");
-          setLoading(false);
-          return null; // Placeholder
+          // Refresh token API çağrısı
+          const newTokens: AuthResponsePayload = await refreshToken(currentRefreshToken);
+          login(newTokens); // Yeni tokenlarla giriş yap
+          return newTokens.accessToken; // Yeni access token'ı döndür
       } catch (error: any) {
-          console.error("Failed to refresh token:", error);
+          console.error("Token yenileme başarısız:", error);
           setError("Oturumu yenileme başarısız. Lütfen tekrar giriş yapın.");
           await logout(); // Yenileme başarısız olursa tamamen çıkış yap
           return null; // İşlem başarısız
       }
   };
-  */
 
 
   return (
-    // Sağlanan değerlere handleRefreshToken fonksiyonunu da ekleyebilirsiniz
-    <AuthContext.Provider value={{ ...authState, login, logout, setLoading, setError /*, handleRefreshToken*/ }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, setLoading, setError, handleRefreshToken }}>
       {children}
     </AuthContext.Provider>
   );

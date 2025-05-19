@@ -1,41 +1,24 @@
-import type { UserCredentials, RegisterCredentials, LogoutRequestPayload } from '../types';
+import type { UserCredentials, RegisterCredentials, LogoutRequestPayload, AuthResponsePayload } from '../types/index.ts';
 import axiosInstance from '../../../shared/api/axiosInstance';
 
-// Vite'da çevre değişkenleri import.meta.env ile kullanılır
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-export async function loginUser(credentials: UserCredentials) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Giriş başarısız oldu');
+export async function loginUser(credentials: UserCredentials): Promise<AuthResponsePayload> {
+  try {
+    const response = await axiosInstance.post('/api/auth/login', credentials);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || 'Giriş başarısız oldu';
+    throw new Error(errorMessage);
   }
-
-  return response.json();
 }
 
-export async function registerUser(credentials: RegisterCredentials) {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Kayıt başarısız oldu');
+export async function registerUser(credentials: RegisterCredentials): Promise<AuthResponsePayload> {
+  try {
+    const response = await axiosInstance.post('/api/auth/register', credentials);
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || 'Kayıt başarısız oldu';
+    throw new Error(errorMessage);
   }
-
-  return response.json();
 }
 
 export const logoutUser = async (payload: LogoutRequestPayload): Promise<void> => {
@@ -44,12 +27,19 @@ export const logoutUser = async (payload: LogoutRequestPayload): Promise<void> =
         // Başarılı logout durumunda backend genellikle 200 OK veya 204 No Content döner.
     } catch (error: any) {
         // Logout hatası genellikle kritik değil, ama loglanabilir.
-        console.error('Logout API call failed:', error);
         // Token'lar zaten client-side'da silineceği için, bu hatayı kullanıcıya göstermeyebiliriz.
         // Ancak, sunucu tarafında session/token geçersiz kılma işlemi başarısız olduysa bu bir sorundur.
         throw new Error('Çıkış işlemi sırasında bir sorun oluştu.');
     }
 };
 
-// TODO: Refresh token endpoint'i için fonksiyon (/api/auth/refresh)
-// export const refreshToken = async (refreshTokenValue: string): Promise<AuthResponsePayload> => { ... }
+// Refresh token endpoint'i için fonksiyon
+export const refreshToken = async (refreshTokenValue: string): Promise<AuthResponsePayload> => {
+  try {
+    const response = await axiosInstance.post('/api/auth/refresh', { refreshToken: refreshTokenValue });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || 'Token yenileme başarısız oldu';
+    throw new Error(errorMessage);
+  }
+}

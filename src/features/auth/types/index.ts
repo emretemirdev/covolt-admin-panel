@@ -35,7 +35,7 @@ export interface AuthContextType {
     logout: () => void;
     setLoading: (loading: boolean) => void;
     setError: (error: string | null) => void;
-    // handleRefreshToken?: () => Promise<string | null>; // Eğer eklerseniz
+    handleRefreshToken: () => Promise<string | null>; // Token yenileme fonksiyonu
 }
 
 // API İstek Tipleri
