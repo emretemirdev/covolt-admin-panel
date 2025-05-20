@@ -15,7 +15,8 @@ import {
   IconAdjustments,
   IconSun,
   IconMoon,
-  IconSearch
+  IconSearch,
+  IconBuildingSkyscraper
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
@@ -56,6 +57,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { icon: IconHome, label: 'Ana Sayfa', path: '/dashboard' },
     { icon: IconGauge, label: 'İstatistikler', path: '/dashboard/stats' },
     { icon: IconUser, label: 'Kullanıcılar', path: '/dashboard/users' },
+    { icon: IconBuildingSkyscraper, label: 'Şirketler', path: '/admin/companies' },
     { icon: IconUser, label: 'Rol Yönetimi', path: '/admin/roles' },
     { icon: IconAdjustments, label: 'İzin Yönetimi', path: '/admin/permissions' },
     { icon: IconAdjustments, label: 'Ayarlar', path: '/dashboard/settings' },

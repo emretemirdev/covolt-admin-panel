@@ -8,6 +8,7 @@ import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { DashboardPage } from './features/dashboard/pages/DashboardPage';
 import { RolesPage } from './features/admin/pages/RolesPage';
 import { PermissionsPage } from './features/admin/pages/PermissionsPage';
+import { CompaniesPage } from './features/admin/pages/CompaniesPage';
 import { ProtectedRoute } from './app/router/ProtectedRoute';
 
 // AuthProvider'ı import edin
@@ -59,6 +60,19 @@ function App() {
                 role="PLATFORM_ADMIN"
               >
                 <PermissionsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Şirket yönetimi sayfası - MANAGE_COMPANIES izni veya PLATFORM_ADMIN rolü gerektirir */}
+          <Route
+            path="/admin/companies"
+            element={
+              <ProtectedRoute
+                permission="MANAGE_ALL_COMPANIES"
+                role="ROLE_PLATFORM_ADMIN"
+              >
+                <CompaniesPage />
               </ProtectedRoute>
             }
           />

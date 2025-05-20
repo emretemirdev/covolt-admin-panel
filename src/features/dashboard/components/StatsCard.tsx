@@ -36,7 +36,7 @@ export function StatsCard({ title, value, diff, icon }: StatsCardProps) {
       </Group>
 
       <Text size="xs" c="dimmed" mt="md">
-        Son 24 saatteki değişim
+        Son 30 gündeki değişim
       </Text>
     </Card>
   );
